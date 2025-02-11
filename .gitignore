@@ -1,2 +1,15 @@
 .data/imdb/
 .env
+.data/
+results/
+results/.data/
+
+data/
+
+# pycache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz

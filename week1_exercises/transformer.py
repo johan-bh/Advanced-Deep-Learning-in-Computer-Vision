@@ -107,16 +107,12 @@ class PositionalEncoding(nn.Module):
 
 class PositionalEmbedding(nn.Module):
     def __init__(self, embed_dim, max_seq_len=512):
-
         super(PositionalEmbedding, self).__init__()
-        self.pe = nn.Embedding(embedding_dim=embed_dim, num_embeddings=max_seq_len)
+        self.pe = nn.Parameter(torch.randn(1, max_seq_len, embed_dim))
 
     def forward(self, x):
-        batch_size, seq_length, embed_dim = x.size()
-        positions = self.pe(torch.arange(seq_length, device=to_device()))
-        positions = positions[None, :, :].expand(batch_size, seq_length, embed_dim)
-        return x + positions
-        
+        batch_size = x.size(0)
+        return x + self.pe[:, :x.size(1)]
 
 class TransformerClassifier(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers, max_seq_len,
@@ -135,8 +131,8 @@ class TransformerClassifier(nn.Module):
 
         # Initialize cls token parameter
         if self.pool == 'cls':
-            #self.cls_token = ... # Institate an nn.Parameter with size: 1,1,embed_dim
-            max_seq_len +=1
+            self.cls_token = nn.Parameter(torch.randn(1, 1, embed_dim))
+            max_seq_len += 1
         
         if self.pos_enc == 'fixed':
             self.positional_encoding = PositionalEncoding(embed_dim=embed_dim, max_seq_len=max_seq_len)
@@ -158,11 +154,9 @@ class TransformerClassifier(nn.Module):
         batch_size, seq_length, embed_dim = tokens.size()
 
         # Include cls token in the input sequence
-        ####################### insert code here #######################
         if self.pool == 'cls':
-            # HINT: repeat the cls token of the batch dimension
-            tokens = repeat(tokens[:, 0, :], 'b d -> b (h d)', h=batch_size)
-        ################################################################
+            cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b=batch_size)
+            tokens = torch.cat([cls_tokens, tokens], dim=1)
 
         x = self.positional_encoding(tokens)
         x = self.dropout(x)
@@ -174,10 +168,7 @@ class TransformerClassifier(nn.Module):
             x = x.mean(dim=1)
             
         # Get cls token
-        ####################### insert code here #######################
         if self.pool == 'cls':
-            # HINT: get the first output token of the transfomer.
             x = x[:, 0, :]
-        ################################################################
 
         return self.classifier(x)
