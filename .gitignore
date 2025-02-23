@@ -13,3 +13,4 @@ __pycache__/
 *.pyd
 *.pyw
 *.pyz
+best_model.pth

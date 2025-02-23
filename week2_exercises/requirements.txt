@@ -2,3 +2,9 @@ matplotlib
 einops
 seaborn
 tqdm
+optuna
+torch
+torchvision
+numpy
+pandas
+
